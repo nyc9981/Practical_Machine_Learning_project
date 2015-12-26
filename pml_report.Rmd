@@ -1,0 +1,92 @@
+---
+title: 'Practical Machine Learning: Project Report'
+output:
+  html_document:
+    keep_md: yes
+---
+
+```{r global_options, include=FALSE}
+knitr::opts_chunk$set(fig.width=5, fig.height=5, fig.path='figure/',
+                      cache=TRUE, warning=FALSE, message=FALSE)
+```
+***
+## Summary
+
+In this report, I analyze a provided dataset collected from accelerometers on the belt, forearm, arm, and dumbell of 6 individuals. I build a model using a machine learning algorithm called "Random Forest", and use this model to predict the manners or types of weight lifting exercises with 99.2% accuracy.  This model should help identify the mistakes made in weight-lifting exercises.    
+
+## Data
+
+The training data for this project are available [here](https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv).  The test data are available [here](https://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv).
+
+The data for this project come from this source:[http://groupware.les.inf.puc-rio.br/har](http://groupware.les.inf.puc-rio.br/har). 
+
+## Exploratory data analysis 
+
+First look at the structure of the raw training dataset. It has 160 variables and 19622 observations. The outcome variable classe representing different weight-lifting behaviours should be catagorical. Therefore, I change it to the factor type.
+
+```{r}
+raw_training <- read.csv("pml-training.csv", header = TRUE, stringsAsFactors=FALSE)
+str(raw_training, list.len=10)
+raw_training$classe <- as.factor(raw_training$classe)
+```
+By looking at the dataset, there are a number of possible predictors that have a lot of NAs or empty strings ("").  They are eliminated from the dataset.  
+
+```{r}
+raw_training <- raw_training[, !(colSums(is.na(raw_training)) > 0)]
+raw_training <- raw_training[, !apply(raw_training, 2, function(x) any(x==""))]
+```
+
+After careful inspection of all the columns, it seems that the first 7 variables (X, user_name, raw_timestamp_part_1, "raw_timestamp_part_2, cvtd_timestamp, new_window, num_window) are not useful in any way for predicting the weight-lifting behaviors.  So, they are eliminated from the dataset. 
+
+```{r}
+raw_training <- raw_training[,-(1:7)]
+```
+
+## Model Building
+
+### Spitting data to training and cross-validation sets
+Since the dataset has quite a lot of observations, it would be appropiate to split it to two datasets, one for training the model and the other for cross validation. 
+
+```{r}
+library(caret)
+set.seed(12345)
+inTrain <- createDataPartition(raw_training$classe, p=0.8, list=FALSE)
+training <- raw_training[inTrain,]
+cross_validation <- raw_training[-inTrain,]
+```
+
+### Fitting the Model
+
+To identify the weight-lifting behaviors based on the training data is a typical classification problem.  The first machine learning method coming to my mind is "Random Forest", which is generally accurate, but may suffer overfitting problem.  Next I will fit a prediction model using this method.  
+
+```{r modfit, cache=TRUE}
+modfit <- train(classe ~., data=training, method="rf", tuneGrid = data.frame(mtry = 3))
+```
+
+### Cross Validation and Error Estimation
+  
+* Error estimation of the model (in sample error) is shown in the following model diagnostic plot.
+
+```{r fig1}
+plot(modfit$finalModel)
+```
+
+* Then the model is applied to the cross validation dataset. The confusion matrix between prediction and truth would estimate the out of sample errors. 
+
+```{r}
+confusionMatrix(cross_validation$classe, predict(modfit, cross_validation))
+```
+
+* Clearly, this model has done a good job and achieved predicting accuracy of 99.2% on the cross-validation data set.
+
+## Predictions
+
+The model is applied to testing dataset, and the predictions are shown below.
+
+```{r}
+raw_testing <-read.csv("pml-testing.csv", header = TRUE, stringsAsFactors=FALSE)
+predictors <- names(training[, -53])
+testing <- raw_testing[, predictors] 
+answers <- predict(modfit, testing)
+answers
+```
