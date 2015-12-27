@@ -1,6 +1,7 @@
 ---
 title: 'Practical Machine Learning: Project Report'
 output:
+  pdf_document: default
   html_document:
     keep_md: yes
 ---
@@ -44,7 +45,7 @@ raw_training <- raw_training[,-(1:7)]
 
 ## Model Building
 
-### Spitting data to training and cross-validation sets
+### Splitting data to training and cross-validation sets
 Since the dataset has quite a lot of observations, it would be appropiate to split it to two datasets, one for training the model and the other for cross validation. 
 
 ```{r}
