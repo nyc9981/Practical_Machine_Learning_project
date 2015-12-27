@@ -100,8 +100,8 @@ raw_training &lt;- raw_training[, !apply(raw_training, 2, function(x) any(x==&qu
 </div>
 <div id="model-building" class="section level2">
 <h2>Model Building</h2>
-<div id="spitting-data-to-training-and-cross-validation-sets" class="section level3">
-<h3>Spitting data to training and cross-validation sets</h3>
+<div id="splitting-data-to-training-and-cross-validation-sets" class="section level3">
+<h3>Splitting data to training and cross-validation sets</h3>
 <p>Since the dataset has quite a lot of observations, it would be appropiate to split it to two datasets, one for training the model and the other for cross validation.</p>
 <pre class="r"><code>library(caret)
 set.seed(12345)
